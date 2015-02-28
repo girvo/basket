@@ -17,18 +17,16 @@ hhvm__install_from_source() {
         llvm clang
 
     # checkout and build
-    pushd_q ~
-        mkdir -p Downloads
-        pushd_q Downloads
-            git clone git://github.com/facebook/hhvm.git
-            pushd_q hhvm
-                export CMAKE_PREFIX_PATH=`pwd`
-                git checkout ${version}
-                git submodule update --init --recursive
-                cmake .
-                make
-                with_sudo make install
-            popd_q
+    mkdir -p ${BASKET__PATH_TEMP}
+    pushd_q ${BASKET__PATH_TEMP}
+        git clone git://github.com/facebook/hhvm.git
+        pushd_q hhvm
+            export CMAKE_PREFIX_PATH=`pwd`
+            git checkout ${version}
+            git submodule update --init --recursive
+            cmake .
+            make
+            with_sudo make install
         popd_q
     popd_q
 
@@ -61,7 +59,7 @@ hhvm__install_from_source() {
 
 hhvm__install_check_links() {
     # Need to ensure accessible by root as well
-    if ! is_file /usr/bin/hhvm; then
-        with_sudo ln -s /usr/local/bin/hhvm /usr/bin/hhvm
+    if ! is_file ${BASKET__PATH_BIN}/hhvm; then
+        with_sudo ln -s ${BASKET__PATH_USRBIN}/hhvm ${BASKET__PATH_BIN}/hhvm
     fi
 }

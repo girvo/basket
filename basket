@@ -9,6 +9,21 @@ readonly ROOT_USERNAME=root
 readonly COMPOSER_INSTALL_PATH=/usr/local/bin/composer
 readonly COMPOSER_INSTALLER_URL=https://getcomposer.org/composer.phar
 
+# Set default env vars if not defined
+
+if [ -z "$BASKET__PATH_MANUAL_INSTALL_DIR" ]; then
+	BASKET__PATH_MANUAL_INSTALL_DIR="/opt"
+fi
+if [ -z "$BASKET__PATH_BIN" ]; then
+	BASKET__PATH_BIN="/usr/bin"
+fi
+if [ -z "$BASKET__PATH_USRBIN" ]; then
+	BASKET__PATH_USRBIN="/usr/local/bin"
+fi
+if [ -z "$BASKET__PATH_TEMP" ]; then
+	BASKET__PATH_TEMP="~/Downloads"
+fi
+
 # Detect base path for resolution in other scripts. @see http://stackoverflow.com/a/246128/141881
 
 basket__path() {
