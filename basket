@@ -587,7 +587,6 @@ await_input() {
 
 basket__header() {
 	local msg=$@
-	local command='echo'
 
 	printf "\033[37m\033[44m"
 	echo "                                                                   "
@@ -600,4 +599,24 @@ basket__header() {
 	else
 		echo ""
 	fi
+}
+
+basket__warn() {
+	local msg=$@
+
+	echo -e "\033[30m\033[43m ${msg} \033[0m"
+
+	if [[ $BASKET__INTERACTIVE_MODE == "1" ]]; then
+		await_input ""
+	else
+		echo ""
+	fi
+}
+
+basket__error_pause() {
+	local msg=$@
+
+	echo -e "\033[1m\033[41m ${msg} \033[0m"
+
+	await_input ""
 }
