@@ -584,3 +584,20 @@ await_input() {
     read -p "$1" -n 1 -s
     echo ""
 }
+
+basket__header() {
+	local msg=$@
+	local command='echo'
+
+	printf "\033[37m\033[44m"
+	echo "                                                                   "
+	echo " $msg"
+	echo "                                                                   "
+	printf "\033[0m"
+
+	if [[ $BASKET__INTERACTIVE_MODE == "1" ]]; then
+		await_input ""
+	else
+		echo ""
+	fi
+}
