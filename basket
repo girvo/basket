@@ -13,6 +13,9 @@ readonly COMPOSER_INSTALLER_URL=https://getcomposer.org/composer.phar
 
 if [ -z "$BASKET__INTERACTIVE_MODE" ]; then
 	BASKET__INTERACTIVE_MODE=0
+	if [ -z "$BASKET__PAUSE_AT_HEADERS" ]; then
+		BASKET__PAUSE_AT_HEADERS=0
+	fi
 fi
 
 if [ -z "$BASKET__PATH_MANUAL_INSTALL_DIR" ]; then
@@ -594,7 +597,7 @@ basket__header() {
 	echo "                                                                   "
 	printf "\033[0m"
 
-	if [[ $BASKET__INTERACTIVE_MODE == "1" ]]; then
+	if [[ $BASKET__INTERACTIVE_MODE == "1" && $BASKET__PAUSE_AT_HEADERS == "1" ]]; then
 		await_input ""
 	else
 		echo ""
