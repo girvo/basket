@@ -11,6 +11,10 @@ readonly COMPOSER_INSTALLER_URL=https://getcomposer.org/composer.phar
 
 # Set default env vars if not defined
 
+if [ -z "$BASKET__INTERACTIVE_MODE" ]; then
+	BASKET__INTERACTIVE_MODE=0
+fi
+
 if [ -z "$BASKET__PATH_MANUAL_INSTALL_DIR" ]; then
 	BASKET__PATH_MANUAL_INSTALL_DIR="/opt"
 fi
@@ -349,6 +353,36 @@ popd_q() {
     # Ordinary popd prints the state of its directory stack whenever its
     # called. This is undesired in a script.
     popd > /dev/null
+}
+
+#
+# Interactive mode wrappers
+#
+# Internal basket API for toggling user debug mode
+#
+
+basket__pushd() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		pushd_q $1
+	else
+		pushd $1
+	fi
+}
+
+basket__popd() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		popd_q $1
+	else
+		popd $1
+	fi
+}
+
+basket__wget() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		wget --quiet $1
+	else
+		wget $1
+	fi
 }
 
 
