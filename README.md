@@ -2,7 +2,7 @@
 
 ## What is it?
 
-It's a ***bas**h thoole **ket***, or *bash toolkit* if you're sober. Yeah, we tried. It's also a basket of bash functions so that kinda works.
+It's a <em><strong>bas</strong>h thoole <strong>ket</strong></em>, or *bash toolkit* if you're sober. Yeah, we tried. It's also a basket of bash functions so that kinda works.
 
 Basket is like a basket because you can dump little scripts into it with no overhead other than storage. When sourced, only the main (small) basket of bash helper methods is loaded - special-purpose modules are brought in on demand and have a simple dependency management system. (So if basket ever gets too big, you can just blindly delete stuff you don't need out of the `lib` folder).
 
