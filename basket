@@ -588,6 +588,89 @@ await_input() {
     echo ""
 }
 
+DEFAULT_CONFIRM_PROMPT='Are you sure?'
+
+#
+# Prompts user with a yes/no question and interprets their response,
+# assuming they mean "no" if the response is not "yes" or "y".
+#
+# Gives a zero exit code only if the user responds with "yes" or "y"
+# (case insensitive). Any other response (including no response) is
+# assumed to mean "no", and gives a non-zero exit code.
+#
+# If no prompt text is given, "Are you sure?" is used. The "[y/N]"
+# output is always appended to any prompt used.
+#
+# Example use:
+#     if confirm_default_no "Are you REALLY sure?"; then
+#         echo "I'll take that as a yes"
+#     else
+#         echo "I'll take that as a no"
+#     fi
+#
+# Output:
+# > Are you REALLY sure? [y/N] yes
+# I'll take that as a yes
+#
+# > Are you REALLY sure? [y/N] What???
+# I'll take that as a no
+#
+confirm_default_no() {
+    local prompt=${1:-$DEFAULT_CONFIRM_PROMPT}
+    local fullprompt="${prompt} [y/N] "
+    local response=""
+
+    read -r -p "$fullprompt" response
+
+    # Lowercase response
+    response=${response,,}
+    # Check against pattern and return result
+    local response_regex='^(yes|y)$'
+    [[ $response =~ $response_regex ]]
+}
+
+#
+# Prompts user with a yes/no question and interprets their response,
+# assuming they mean "yes" if the response is not "no" or "n".
+#
+# Gives a non-zero exit code only if the user responds with "no" or "n"
+# (case insensitive). Any other response (including no response) is
+# assumed to mean "yes", and gives a zero exit code.
+#
+# If no prompt text is given, "Are you sure?" is used. The "[Y/n]"
+# output is always appended to any prompt used.
+#
+# Example use:
+#     if confirm_default_yes "Should I do the usual thing?"; then
+#         echo "I'll take that as a yes"
+#     else
+#         echo "I'll take that as a no"
+#     fi
+#
+# Output:
+# > Should I do the usual thing? [Y/n] no
+# I'll take that as a no
+#
+# > Should I do the usual thing? [Y/n] whatever
+# I'll take that as a yes
+#
+# > Should I do the usual thing? [Y/n]
+# I'll take that as a yes
+#
+confirm_default_yes() {
+    local prompt=${1:-$DEFAULT_CONFIRM_PROMPT}
+    local fullprompt="${prompt} [Y/n] "
+    local response=""
+
+    read -r -p "$fullprompt" response
+
+    # Lowercase response
+    response=${response,,}
+    # Check against pattern and return result
+    local response_regex='^(no|n)$'
+    ! [[ $response =~ $response_regex ]]
+}
+
 basket__header() {
 	local msg=$@
 
