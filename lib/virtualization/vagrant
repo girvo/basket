@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 if [ -z "$VAGRANT_VER" ]; then
 	VAGRANT_VER="1.7.2_x86_64"

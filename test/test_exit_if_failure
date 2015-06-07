@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 declare SUCCESS=0
 
@@ -63,5 +63,5 @@ fail_on_three() {
 echo Starting.
 
 fail_on_three 3
-   exit_if_failure Error!  
+   exit_if_failure Error!
 echo Done.

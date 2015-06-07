@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 basket__include package_management/yum
 

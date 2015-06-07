@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # version refers to a tag name, i.e. "HHVM-3.4.2"
 hhvm__install_from_source() {

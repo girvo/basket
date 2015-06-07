@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 mysql__install_with_root_passwd() {
     local mysql_root_passwd=$1

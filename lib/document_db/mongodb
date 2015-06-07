@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Functions for installing and managing MongoDB from mongodb.org
 #

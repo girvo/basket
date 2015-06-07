@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # enforcing, permissive or disabled
 selinux__set_mode() {

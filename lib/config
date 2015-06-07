@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # XXX NOTE: All of this module is very alpha and should not be used yet

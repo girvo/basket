@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ssh__disable_root_login() {
 	with_sudo "find_replace_in_file \"^PermitRootLogin\" \"#PermitRootLogin\" /etc/ssh/sshd_config"

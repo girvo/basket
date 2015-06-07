@@ -80,5 +80,4 @@ Basket only requires a temporary folder for downloading files somewhere and does
         - USB device attached
     - install / uninstall desktop application (gnome3, unity)
 - cleanup:
-    - replace all `#!/bin/bash` with `#!/bin/env bash`
     - put nodejs manual installation to the correct location

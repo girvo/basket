@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This can be used with package name/version patterns, eg "php-5.3.*"
 yum__package_exists() {
