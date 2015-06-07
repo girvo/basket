@@ -28,7 +28,7 @@ if [ -z "$BASKET__PATH_USRBIN" ]; then
 	BASKET__PATH_USRBIN="/usr/local/bin"
 fi
 if [ -z "$BASKET__PATH_TEMP" ]; then
-	BASKET__PATH_TEMP="~/Downloads"
+	BASKET__PATH_TEMP="$HOME/Downloads"
 fi
 
 # Detect base path for resolution in other scripts. @see http://stackoverflow.com/a/246128/141881
