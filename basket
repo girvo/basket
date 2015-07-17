@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 readonly SUCCESS=0
 readonly FAILURE=1
@@ -8,6 +8,28 @@ readonly ROOT_USERNAME=root
 
 readonly COMPOSER_INSTALL_PATH=/usr/local/bin/composer
 readonly COMPOSER_INSTALLER_URL=https://getcomposer.org/composer.phar
+
+# Set default env vars if not defined
+
+if [ -z "$BASKET__INTERACTIVE_MODE" ]; then
+	BASKET__INTERACTIVE_MODE=0
+	if [ -z "$BASKET__PAUSE_AT_HEADERS" ]; then
+		BASKET__PAUSE_AT_HEADERS=0
+	fi
+fi
+
+if [ -z "$BASKET__PATH_MANUAL_INSTALL_DIR" ]; then
+	BASKET__PATH_MANUAL_INSTALL_DIR="/opt"
+fi
+if [ -z "$BASKET__PATH_BIN" ]; then
+	BASKET__PATH_BIN="/usr/bin"
+fi
+if [ -z "$BASKET__PATH_USRBIN" ]; then
+	BASKET__PATH_USRBIN="/usr/local/bin"
+fi
+if [ -z "$BASKET__PATH_TEMP" ]; then
+	BASKET__PATH_TEMP="$HOME/Downloads"
+fi
 
 # Detect base path for resolution in other scripts. @see http://stackoverflow.com/a/246128/141881
 
@@ -31,10 +53,21 @@ basket__path() {
     echo "$DIR"
 }
 
+basket__include_path() {
+	echo "$(basket__path)/lib"
+}
+
+# Load up basket library files (from above dir)
+
+basket__loaded_files=()
+
 basket__include() {
     local path=$1
+    local fullpath="$(basket__include_path)/${path}"
 
-    . "$(basket__path)/lib/${path}"
+    basket__loaded_files=("${basket__loaded_files[@]}" "$fullpath")
+
+    . $fullpath
 }
 
 #
@@ -75,6 +108,12 @@ is_dir() {
     local dir=$1
 
     [[ -d $dir ]]
+}
+
+is_symlink() {
+    local dir=$1
+
+    [[ -h $dir ]]
 }
 
 is_yes_or_no() {
@@ -244,7 +283,14 @@ create_webserver_home_dir() {
 with_basket_sourced() {
     local commands=$@
 
-    echo ". \"$(basket__path)/basket\"; ${commands} "
+    local includes=""
+
+    for lib in "${basket__loaded_files[@]}"
+	do
+		includes="$includes; . ${lib}"
+	done
+
+    echo ". \"$(basket__path)/basket\" $includes; ${commands} "
 }
 
 as_user() {
@@ -309,9 +355,37 @@ popd_q() {
     #
     # Ordinary popd prints the state of its directory stack whenever its
     # called. This is undesired in a script.
-    local args=$@
+    popd > /dev/null
+}
 
-    popd "${args}" > /dev/null
+#
+# Interactive mode wrappers
+#
+# Internal basket API for toggling user debug mode
+#
+
+basket__pushd() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		pushd_q $1
+	else
+		pushd $1
+	fi
+}
+
+basket__popd() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		popd_q $1
+	else
+		popd $1
+	fi
+}
+
+basket__wget() {
+	if [[ $BASKET__INTERACTIVE_MODE == "0" ]]; then
+		wget --quiet $@
+	else
+		wget $@
+	fi
 }
 
 
@@ -399,7 +473,7 @@ if using_yum; then
 
     is_package_installed() {
         local package_name=$1
-        with_sudo rpm --quiet ${package_name}
+        with_sudo "rpm -q --quiet ${package_name}"
     }
 
     upgrade_packages() {
@@ -460,6 +534,25 @@ ensure_fqdn_hostname() {
     fi
 }
 
+set_timezone() {
+    local timezone_name=$1 # eg "Australia/Brisbane"
+
+    #
+    # TODO: ADD SUPPORT for Amazon Linux
+    #
+    if is_platform "Ubuntu"; then
+        # This would probably work for Debian too.
+        with_sudo "\
+                apt-get install tzdata \
+                && echo "${timezone_name}" > /etc/timezone \
+                && dpkg-reconfigure -f noninteractive tzdata \
+        " && return ${SUCCESS}
+    else
+        err_msg "Platform not supported"
+        return ${FAILURE}
+    fi
+}
+
 #
 # Platform-specific fixes
 #
@@ -492,4 +585,124 @@ ubuntu_language_pack() {
 
 await_input() {
     read -p "$1" -n 1 -s
+    echo ""
+}
+
+DEFAULT_CONFIRM_PROMPT='Are you sure?'
+
+#
+# Prompts user with a yes/no question and interprets their response,
+# assuming they mean "no" if the response is not "yes" or "y".
+#
+# Gives a zero exit code only if the user responds with "yes" or "y"
+# (case insensitive). Any other response (including no response) is
+# assumed to mean "no", and gives a non-zero exit code.
+#
+# If no prompt text is given, "Are you sure?" is used. The "[y/N]"
+# output is always appended to any prompt used.
+#
+# Example use:
+#     if confirm_default_no "Are you REALLY sure?"; then
+#         echo "I'll take that as a yes"
+#     else
+#         echo "I'll take that as a no"
+#     fi
+#
+# Output:
+# > Are you REALLY sure? [y/N] yes
+# I'll take that as a yes
+#
+# > Are you REALLY sure? [y/N] What???
+# I'll take that as a no
+#
+confirm_default_no() {
+    local prompt=${1:-$DEFAULT_CONFIRM_PROMPT}
+    local fullprompt="${prompt} [y/N] "
+    local response=""
+
+    read -r -p "$fullprompt" response
+
+    # Lowercase response
+    response=${response,,}
+    # Check against pattern and return result
+    local response_regex='^(yes|y)$'
+    [[ $response =~ $response_regex ]]
+}
+
+#
+# Prompts user with a yes/no question and interprets their response,
+# assuming they mean "yes" if the response is not "no" or "n".
+#
+# Gives a non-zero exit code only if the user responds with "no" or "n"
+# (case insensitive). Any other response (including no response) is
+# assumed to mean "yes", and gives a zero exit code.
+#
+# If no prompt text is given, "Are you sure?" is used. The "[Y/n]"
+# output is always appended to any prompt used.
+#
+# Example use:
+#     if confirm_default_yes "Should I do the usual thing?"; then
+#         echo "I'll take that as a yes"
+#     else
+#         echo "I'll take that as a no"
+#     fi
+#
+# Output:
+# > Should I do the usual thing? [Y/n] no
+# I'll take that as a no
+#
+# > Should I do the usual thing? [Y/n] whatever
+# I'll take that as a yes
+#
+# > Should I do the usual thing? [Y/n]
+# I'll take that as a yes
+#
+confirm_default_yes() {
+    local prompt=${1:-$DEFAULT_CONFIRM_PROMPT}
+    local fullprompt="${prompt} [Y/n] "
+    local response=""
+
+    read -r -p "$fullprompt" response
+
+    # Lowercase response
+    response=${response,,}
+    # Check against pattern and return result
+    local response_regex='^(no|n)$'
+    ! [[ $response =~ $response_regex ]]
+}
+
+basket__header() {
+	local msg=$@
+
+	printf "\033[37m\033[44m"
+	echo "                                                                   "
+	echo " $msg"
+	echo "                                                                   "
+	printf "\033[0m"
+
+	if [[ $BASKET__INTERACTIVE_MODE == "1" && $BASKET__PAUSE_AT_HEADERS == "1" ]]; then
+		await_input ""
+	else
+		echo ""
+	fi
+}
+
+basket__warn() {
+	local msg=$@
+
+	echo -e "\033[30m\033[43m ${msg} \033[0m"
+
+	if [[ $BASKET__INTERACTIVE_MODE == "1" ]]; then
+		await_input ""
+	else
+		echo ""
+	fi
+}
+
+basket__error_pause() {
+	local msg=$@
+
+	echo -e "\033[1m\033[41m ${msg} \033[0m"
+
+	await_input ""
 }

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 basket__include package_management/yum
 
@@ -9,11 +9,11 @@ php__install() {
     if using_yum; then
         install_packages \
             php php-cli php-readline php-mysql php-sqlite php-fpm \
-            php-imagick php-xdebug php-curl php-mcrypt
+            php-imagick php-xdebug php-curl php-mcrypt php-xml
     elif using_apt; then
         install_packages \
             php5 php5-cli php5-readline php5-mysql php5-sqlite php5-fpm \
-            php5-imagick php5-xdebug php5-curl php5-mcrypt \
+            php5-imagick php5-xdebug php5-curl php5-mcrypt php5-xml
     else
         err_msg "Currently this only supports Ubuntu/Debian and Amazon Linux"
         return ${FAILURE}
@@ -41,7 +41,7 @@ php__install_5_3() {
         install_packages \
             ${php53} ${php53}-cli ${php53}-readline ${php53}-mysql \
             ${php53}-sqlite ${php53}-fpm ${php53}-imagick \
-            ${php53}-xdebug ${php53}-curl ${php53}-mcrypt
+            ${php53}-xdebug ${php53}-curl ${php53}-mcrypt ${php53}-xml
     else
         # XXX TODO non-yum installs still needs work
         err_msg "PHP 5.3 install on non-yum systems not supported yet"
@@ -49,6 +49,33 @@ php__install_5_3() {
     fi
 
     echo Done installing PHP 5.3
+}
+
+php__install_5_5() {
+    echo Installing PHP 5.5...
+
+    if using_yum; then
+        if yum__package_exists 'php-5.5.*'; then
+            local php55="php"
+        elif yum__package_exists 'php55'; then
+            local php55="php55"
+        else
+            err_msg "Couldn't confidently determine which package provides PHP 5.5"
+            return ${FAILURE}
+        fi
+
+        # Thus far, tested on Amazon Linux
+        install_packages \
+            ${php55} ${php55}-cli ${php55}-readline ${php55}-mysqlnd \
+            ${php55}-sqlite ${php55}-fpm ${php55}-imagick \
+            ${php55}-xdebug ${php55}-curl ${php55}-mcrypt ${php55}-xml
+    else
+        # XXX TODO non-yum installs still needs work
+        err_msg "PHP 5.5 install on non-yum systems not supported yet"
+        return ${FAILURE}
+    fi
+
+    echo Done installing PHP 5.5
 }
 
 php__install_composer() {

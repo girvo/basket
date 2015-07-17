@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 #
@@ -36,15 +36,69 @@ iptables__config_finish() {
 	# Important to do this after calling iptables__config_start() to add a rule for SSH or you will lock yourself out!
 	with_sudo iptables -P INPUT DROP
 
+	iptables__config_save
+}
+
+iptables__disable() {
+	local IPT=/sbin/iptables
+	local IPT6=/sbin/ip6tables
+
+	if is_file /etc/init.d/iptables;
+	then
+	    # reset firewall using redhat script
+		with_sudo /etc/init.d/iptables stop
+		with_sudo /etc/init.d/ip6tables stop
+	elif is_file /usr/sbin/firewalld;
+	then
+		# reset firewall using firewall daemon (which is the new Fedora equivalent)
+		with_sudo service firewalld stop
+		with_sudo chkconfig firewalld off
+	else
+		# for all other Linux distro use following rules to reset firewall
+		### reset ipv4 iptables ###
+		$IPT -F
+		$IPT -X
+		$IPT -Z
+		for table in $(</proc/net/ip_tables_names)
+		do
+			$IPT -t $table -F
+			$IPT -t $table -X
+			$IPT -t $table -Z
+		done
+		$IPT -P INPUT ACCEPT
+		$IPT -P OUTPUT ACCEPT
+		$IPT -P FORWARD ACCEPT
+		### reset ipv6 iptales ###
+		$IPT6 -F
+		$IPT6 -X
+		$IPT6 -Z
+		for table in $(</proc/net/ip6_tables_names)
+		do
+			$IPT6 -t $table -F
+			$IPT6 -t $table -X
+			$IPT6 -t $table -Z
+		done
+		$IPT6 -P INPUT ACCEPT
+		$IPT6 -P OUTPUT ACCEPT
+		$IPT6 -P FORWARD ACCEPT
+	fi
+
+	iptables__config_save
+}
+
+iptables__config_save() {
 	# save rules
 	with_sudo iptables-save > /etc/iptables.rules
 
 	# restore rules on startup
-	with_sudo touch /etc/network/if-pre-up.d/iptablesload
-	with_sudo echo "#!/bin/sh
-iptables-restore < /etc/iptables.rules
-exit 0" > /etc/network/if-pre-up.d/iptablesload
+	if is_dir /etc/network; then
+		with_sudo touch /etc/network/if-pre-up.d/iptablesload
+		with_sudo echo "#!/bin/sh
+	iptables-restore < /etc/iptables.rules
+	exit 0" > /etc/network/if-pre-up.d/iptablesload
 
-	with_sudo chmod +x /etc/network/if-pre-up.d/iptablesload
+		with_sudo chmod +x /etc/network/if-pre-up.d/iptablesload
+	else
+		err_msg "Unable to save iptables config, network scripts directory not found"
+	fi
 }
-

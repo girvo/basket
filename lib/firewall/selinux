@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# enforcing, permissive or disabled
+selinux__set_mode() {
+	local mode=$1
+
+	if is_file /etc/selinux/config; then
+		with_sudo find_replace_in_file "SELINUX=\w+" "SELINUX=${mode}" /etc/selinux/config
+		return ${SUCCESS}
+	fi
+
+	err_msg "/etc/selinux/config does not exist, you may need to edit GRUB boot options"
+}

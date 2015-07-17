@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 readonly TOOLS_PATH=../tools
 readonly TOOLS_CONFIG_PATH=./config/

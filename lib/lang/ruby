@@ -1,0 +1,46 @@
+#!bin/bash
+
+####
+#
+# Ruby versions managed by RVM.
+#
+# Note that RVM methods run for the current user, not for the system as a whole. The only step that
+# may be global is the initial installation, when picking either standalone or multiuser installs.
+# Consequently, you will likely have to run these commands as the actual, real user to install for.
+# RVM seems to have issues determining the target user otherwise.
+#
+# :TODO: get this working with the `as_user` helper.
+#
+####
+
+ruby__rvm_install_standalone() {
+	if using_yum; then
+		gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+	fi
+	curl -sSL https://get.rvm.io | bash -s stable
+	source ~/.rvm/scripts/rvm
+	rvm requirements
+}
+
+ruby__rvm_install_multiuser() {
+	if using_yum; then
+		gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+	fi
+	# :NOTE: the 'sudo' prefix is important, and tells RVM what to do
+	curl -sSL https://get.rvm.io | sudo bash -s stable
+}
+
+ruby__rvm_install_ruby_ver() {
+	local ver=$1
+	rvm install ${ver}
+}
+
+ruby__rvm_set_default_ruby_ver() {
+	local ver=$1
+	rvm use --default ${ver}
+}
+
+ruby__install_core_gems() {
+	gem install rake
+	gem install bundle
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=HipHop Virtual Machine
+
+[Service]
+ExecStart=/usr/bin/hhvm -u hhvm -c /etc/hhvm/php.ini --mode daemon -vServer.Type=fastcgi -vServer.FileSocket=/var/run/hhvm/hhvm.sock
+ExecStop=rm /var/run/hhvm.pid
+PIDFile=/var/run/hhvm.pid
+
+[Install]
+WantedBy=multi-user.target

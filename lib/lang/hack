@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# version refers to a tag name, i.e. "HHVM-3.4.2"
+hhvm__install_from_source() {
+    local version=$1
+
+    if command_exists hhvm; then
+        echo HHVM is already installed.
+        return 0
+    fi
+
+    # compilation dependencies
+    install_packages git svn cpp make autoconf automake libtool patch gcc-c++ cmake \
+        wget memcached boost-devel mysql-devel pcre-devel gd-devel libxml2-devel expat-devel libicu-devel bzip2-devel oniguruma-devel openldap-devel libedit-devel \
+        libc-client-devel libcap-devel binutils-devel pam-devel elfutils-libelf-devel libmcrypt-devel libcurl-devel libmemcached-devel jemalloc-devel tbb-devel \
+        libdwarf-devel ImageMagick-devel libxslt-devel ocaml libevent-devel libyaml-devel readline-devel glog-devel libzip-devel lz4-devel sqlite-devel gmp-devel \
+        llvm clang
+
+    # checkout and build
+    mkdir -p ${BASKET__PATH_TEMP}
+    pushd_q ${BASKET__PATH_TEMP}
+        git clone git://github.com/facebook/hhvm.git
+        pushd_q hhvm
+            export CMAKE_PREFIX_PATH=`pwd`
+            git checkout ${version}
+            git submodule update --init --recursive
+            cmake .
+            make
+            with_sudo make install
+        popd_q
+    popd_q
+
+    # ensure root-runnable, correct binary names etc
+    hhvm__install_check_links
+
+    # ensure there is a user to run as
+    with_sudo useradd hhvm
+
+    # install service script & configure to boot
+    if command_exists systemctl; then
+        with_sudo cp "$(basket__include_path)/lang/hack-res/hhvm.service" /lib/systemd/system/hhvm.service
+        with_sudo chmod 0644 /lib/systemd/system/hhvm.service
+        with_sudo mkdir -p /var/run/hhvm
+        with_sudo chown hhvm /var/run/hhvm
+        if ! is_file /etc/hhvm/php.ini; then
+            with_sudo mkdir -p /etc/hhvm
+            with_sudo cp "$(basket__include_path)/lang/hack-res/hhvm.default.ini" /etc/hhvm/php.ini
+            with_sudo chown -R hhvm /etc/hhvm
+            with_sudo chown 0644 /etc/hhvm/php.ini
+        fi
+        with_sudo systemctl start hhvm
+        with_sudo systemctl enable hhvm
+    else
+        err_msg "Only systemctl is currently supported for self-compiled HHVM installations. Configuration for other mechanisms to be implemented."
+    fi
+
+    # :TODO: setup typechecker
+}
+
+hhvm__install_check_links() {
+    # Need to ensure accessible by root as well
+    if ! is_file ${BASKET__PATH_BIN}/hhvm; then
+        with_sudo ln -s ${BASKET__PATH_USRBIN}/hhvm ${BASKET__PATH_BIN}/hhvm
+    fi
+}

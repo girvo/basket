@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 #
@@ -29,5 +29,5 @@ user__addto_group() {
 	local username=$1
 	local group=$2
 
-	with_sudo usermod -a -G ${username} ${group}
+	with_sudo usermod -a -G ${group} ${username}
 }
